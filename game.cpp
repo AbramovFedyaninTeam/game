@@ -36,6 +36,8 @@ public:
     FloatRect rect;
     bool onGround;
     Sprite sprite;
+    bool canUseWeapon;
+    float weaponTime;
     float currentFrame;
     int weaponState;    //Положение ножа (0 - не бьет, 1 - бьет)
     int health;         //Здоровье (0 - плохо, больше 0 - жив)
@@ -71,6 +73,8 @@ public:
         if (weaponState > 0)  sprite.setTextureRect(IntRect(90   ,570, 40,50));
         if (weaponState < 0)  sprite.setTextureRect(IntRect(90+40,570,-40,50));
 
+
+        //printtext();
 
         sprite.setPosition(rect.left - offsetX, rect.top - offsetY);
 
@@ -116,17 +120,28 @@ int main()
     PLAYER vrag(t);
 
     Clock clock;
+    Clock clock0;
+    clock0.restart();
+    float time0 = clock0.getElapsedTime().asMicroseconds();
 
+    time_t t0;
+    struct tm *t_m0;
+    time_t t1;
+    struct tm *t_m1;
+    t0 = time(NULL);
+    t_m0=localtime(&t0);
+    int tbegin = 3600*t_m0->tm_hour + 60*t_m0->tm_min + t_m0->tm_sec;
+    
     RectangleShape rectangle( Vector2f(32,32));
 
     while (window.isOpen())
     {
-        float time = clock.getElapsedTime().asMicroseconds();
+        float time3 = clock.getElapsedTime().asMicroseconds();
         clock.restart();
 
-        time = time/700;
+        time3 = time3/700;
         
-        if (time>20) time = 20;
+        if (time3>20) time3 = 20;
 
         Event event;
         while (window.pollEvent(event))
@@ -137,45 +152,64 @@ int main()
 
 
         //Сделать движения функциями
-        if (p.weaponState == 0 && Keyboard::isKeyPressed(Keyboard::Left)) 
+        if (p.weaponState == 0)
         {
-            p.dx = -0.1;
-        }
+            if (Keyboard::isKeyPressed(Keyboard::Left)) 
+            {
+                p.dx = -0.1;
+            }
 
-        if (p.weaponState == 0 && Keyboard::isKeyPressed(Keyboard::Right)) 
-        {
-            p.dx = 0.1;
-        }
+            if (Keyboard::isKeyPressed(Keyboard::Right)) 
+            {
+                p.dx = 0.1;
+            }
 
-        if (p.weaponState == 0 && Keyboard::isKeyPressed(Keyboard::Up)) 
+            if (Keyboard::isKeyPressed(Keyboard::Up)) 
+            {
+                if (p.onGround) { p.dy=-0.35; p.onGround=false;}
+            }
+        } 
+        
+        t0=time(NULL);
+        t_m0=localtime(&t0);
+    std::cout <<t_m0->tm_hour<<":"<<t_m0->tm_min<<":"<<t_m0->tm_sec<<" "<<3600*t_m0->tm_hour + 60*t_m0->tm_min + t_m0->tm_sec;
+    std::cout <<tbegin<<std::endl;
+        if (Keyboard::isKeyPressed(Keyboard::Space) && (3600*t_m0->tm_hour + 60*t_m0->tm_min + t_m0->tm_sec > 
+                                                        tbegin + 1)) 
         {
-            if (p.onGround) { p.dy=-0.35; p.onGround=false;}
-        }
-
-        if (Keyboard::isKeyPressed(Keyboard::Space)) 
-        {
+            tbegin = 3600*t_m0->tm_hour + 60*t_m0->tm_min + t_m0->tm_sec;
+    
             if      (p.weaponState == 0 && p.dx > 0) { p.weaponState =  1; p.dx = 0;    p.dy = 0;}
             else if (p.weaponState == 0 && p.dx < 0) { p.weaponState = -1; p.dx = 0;    p.dy = 0;}
             else if (p.weaponState == 1)             { p.weaponState =  0; p.dx =  0.1; p.dy = 0.1;}
             else if (p.weaponState == -1)            { p.weaponState =  0; p.dx = -0.1; p.dy = 0.1;}
         }
+        //if (Keyboard::isKeyPressed(Keyboard::Space) && !p.canUseWeapon) 
+        //{
+        //    gettime(&t0);
+            //if (p.weaponState == 1)                  { p.weaponState =  0; p.dx =  0.1; p.dy = 0.1;}
+            //else if (p.weaponState == -1)            { p.weaponState =  0; p.dx = -0.1; p.dy = 0.1;}
+        //}
 
 
-        if (vrag.weaponState == 0 && Keyboard::isKeyPressed(Keyboard::A)) 
+        if (vrag.weaponState == 0)
         {
-            vrag.dx = -0.1;
-        }
+            if (Keyboard::isKeyPressed(Keyboard::A)) 
+            {
+                vrag.dx = -0.1;
+            }
 
-        if (vrag.weaponState == 0 && Keyboard::isKeyPressed(Keyboard::D)) 
-        {
-            vrag.dx = 0.1;
-        }
+            if (Keyboard::isKeyPressed(Keyboard::D)) 
+            {
+                vrag.dx = 0.1;
+            }
 
-        if (vrag.weaponState == 0 && Keyboard::isKeyPressed(Keyboard::W)) 
-        {
-            if (vrag.onGround) { vrag.dy=-0.35; vrag.onGround=false;}
+            if (Keyboard::isKeyPressed(Keyboard::W)) 
+            {
+                if (vrag.onGround) { vrag.dy=-0.35; vrag.onGround=false;}
+            }
         }
-
+        
         if (Keyboard::isKeyPressed(Keyboard::X)) 
         {
             if      (vrag.weaponState == 0 && vrag.dx > 0) { vrag.weaponState =  1; vrag.dx = 0;    vrag.dy = 0;}
@@ -198,9 +232,9 @@ int main()
         }
 
 
-        p.update(time);
-        vrag.update(time);
-
+        p.update(time3);
+        vrag.update(time3);
+        //sleep(t1);
         if (p.rect.left>300) offsetX = p.rect.left - 300;
         offsetY = p.rect.top - 200;
 
@@ -224,28 +258,12 @@ int main()
             sf::Font font;
             sf::Text text;
             sf::Time t2 = sf::milliseconds(3000);
-            if (!font.loadFromFile("arial.ttf"))
-            {
-             // ошибка...
-            }
-            // select the font
-            text.setFont(font); // font is a sf::Font
-
-            // set the string to display
+            font.loadFromFile("arial.ttf");
+            text.setFont(font);
             text.setString("You are looser");
-
-            // set the character size
-            text.setCharacterSize(24); // in pixels, not points!
-
-            // set the color
+            text.setCharacterSize(24);
             text.setColor(sf::Color::Red);
-
-            // set the text style
             text.setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-            
-
-            // inside the main loop, between window.clear() and window.display()
             window.draw(text);
             window.display();
             sleep(t2);
@@ -257,28 +275,12 @@ int main()
             sf::Font font;
             sf::Text text;
             sf::Time t2 = sf::milliseconds(3000);
-            if (!font.loadFromFile("arial.ttf"))
-            {
-             // ошибка...
-            }
-            // select the font
-            text.setFont(font); // font is a sf::Font
-
-            // set the string to display
+            font.loadFromFile("arial.ttf");
+            text.setFont(font);
             text.setString("You are winner");
-
-            // set the character size
-            text.setCharacterSize(24); // in pixels, not points!
-
-            // set the color
+            text.setCharacterSize(24);
             text.setColor(sf::Color::Red);
-
-            // set the text style
             text.setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-            
-
-            // inside the main loop, between window.clear() and window.display()
             window.draw(text);
             window.display();
             sleep(t2);
